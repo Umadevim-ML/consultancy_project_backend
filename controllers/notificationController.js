@@ -20,10 +20,12 @@ const getNotifications = async (req, res) => {
 // @access  Private
 const markAsRead = async (req, res) => {
     try {
-        const notification = await Notification.findById(req.params.id);
+        const notification = await Notification.findByIdAndUpdate(
+            req.params.id,
+            { isRead: true },
+            { new: true }
+        );
         if (notification) {
-            notification.isRead = true;
-            await notification.save();
             res.json({ message: 'Notification marked as read' });
         } else {
             res.status(404).json({ message: 'Notification not found' });

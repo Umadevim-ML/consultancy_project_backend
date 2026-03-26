@@ -158,11 +158,13 @@ const updateProduct = async (req, res) => {
 const updateStock = async (req, res) => {
     try {
         const { countInStock } = req.body;
-        const product = await Product.findById(req.params.id);
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            { countInStock },
+            { new: true }
+        );
 
-        if (product) {
-            product.countInStock = countInStock;
-            const updatedProduct = await product.save();
+        if (updatedProduct) {
             res.json(updatedProduct);
         } else {
             res.status(404).json({ message: 'Product not found' });
@@ -179,11 +181,16 @@ const updateStock = async (req, res) => {
 const updateDiscount = async (req, res) => {
     try {
         const { discount } = req.body;
-        const product = await Product.findById(req.params.id);
+        if (discount < 0 || discount > 100) {
+            return res.status(400).json({ message: 'Discount must be between 0 and 100' });
+        }
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            { discount },
+            { new: true }
+        );
 
-        if (product) {
-            product.discount = discount;
-            const updatedProduct = await product.save();
+        if (updatedProduct) {
             res.json(updatedProduct);
         } else {
             res.status(404).json({ message: 'Product not found' });
