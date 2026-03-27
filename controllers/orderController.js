@@ -1,6 +1,7 @@
 
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const { createNotification, notifyAdmins } = require('../utils/notification');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -26,6 +27,7 @@ const addOrderItems = async (req, res) => {
             taxPrice,
             shippingPrice,
             totalPrice,
+            updateDefaultAddress,
         } = req.body;
 
         if (orderItems && orderItems.length === 0) {
@@ -61,6 +63,16 @@ const addOrderItems = async (req, res) => {
 
         const createdOrder = await order.save();
 
+        // Optional: Update default address if requested
+        if (updateDefaultAddress) {
+            await User.findByIdAndUpdate(req.user._id, {
+                defaultAddress: {
+                    ...shippingAddress,
+                    mobileNumber
+                }
+            });
+        }
+
         // 3. Decrement stock
         for (const item of orderItems) {
             await Product.findByIdAndUpdate(item.product, {
@@ -80,11 +92,13 @@ const addOrderItems = async (req, res) => {
         );
 
         // Notify Admins
+        const orderSummary = orderItems.map(item => `${item.name} (x${item.qty})`).join(', ');
+        const descriptiveMessage = `Customer: ${req.user.name}\nContact: ${mobileNumber}\nItems: ${orderSummary}\nTotal: ₹${totalPrice}`;
+        
         await notifyAdmins(
             'New Order Received',
-            `A new order #${createdOrder._id} has been placed by ${req.user.name}.`,
-            'Order',
-            `/admin/order/${createdOrder._id}`
+            descriptiveMessage,
+            'Order'
         );
 
         res.status(201).json(createdOrder);
@@ -251,6 +265,16 @@ const cancelOrder = async (req, res) => {
                 `Your order #${order._id} has been cancelled.`,
                 'Order',
                 `/order/${order._id}`
+            );
+
+            // Notify Admins
+            const cancelledItems = order.orderItems.map(item => `${item.name} (x${item.qty})`).join(', ');
+            const cancellationMessage = `Customer: ${req.user.name}\nContact: ${order.mobileNumber}\nItems: ${cancelledItems}\nRefunding/Cancelled Amount: ₹${order.totalPrice}`;
+            
+            await notifyAdmins(
+                'ORDER CANCELLED BY USER',
+                cancellationMessage,
+                'Order'
             );
 
             res.json(updatedOrder);

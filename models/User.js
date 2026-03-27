@@ -10,7 +10,14 @@ const userSchema = new mongoose.Schema({
     wishlist: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
-    }]
+    }],
+    defaultAddress: {
+        address: { type: String },
+        city: { type: String },
+        postalCode: { type: String },
+        country: { type: String },
+        mobileNumber: { type: String }
+    }
 }, { timestamps: true });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

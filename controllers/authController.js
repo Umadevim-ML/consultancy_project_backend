@@ -22,6 +22,7 @@ const authUser = async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            defaultAddress: user.defaultAddress,
             token: generateToken(user._id),
         });
     } else {
@@ -56,6 +57,7 @@ const registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                defaultAddress: user.defaultAddress,
                 token: generateToken(user._id),
             });
         } else {
@@ -79,6 +81,7 @@ const getUserProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            defaultAddress: user.defaultAddress,
         });
     } else {
         res.status(404).json({ message: 'User not found' });
